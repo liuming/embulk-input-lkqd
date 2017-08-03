@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.description   = "Loads reporting data from LKQD API."
   spec.email         = ["liuming@lmws.net"]
   spec.licenses      = ["MIT"]
-  # TODO set this: spec.homepage      = "https://github.com//embulk-input-lkqd"
+  spec.homepage      = "https://github.com/liuming/embulk-input-lkqd"
 
   spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
   spec.test_files    = spec.files.grep(%r{^(test|spec)/})
