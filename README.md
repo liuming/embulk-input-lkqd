@@ -1,27 +1,38 @@
 # Lkqd input plugin for Embulk
 
-TODO: Write short description here and embulk-input-lkqd.gemspec file.
+Loads reporting data from LKQD API.
 
 ## Overview
 
 * **Plugin type**: input
-* **Resume supported**: yes
-* **Cleanup supported**: yes
-* **Guess supported**: no
+* **Resume supported**: no
+* **Cleanup supported**: no
+* **Guess supported**: yes
 
 ## Configuration
 
-- **option1**: description (integer, required)
-- **option2**: description (string, default: `"myvalue"`)
-- **option3**: description (string, default: `null`)
+- **secret_key_id**: API Secret Key ID (string, required)
+- **secret_key**: API Secret Key (string, required)
+- **endpoint**: API endpoint (string, default: `'https://api.lkqd.com/reports'`)
+- **report_parameters**: Report parameters documented in https://wiki.lkqd.com/display/API/LKQD+API (hash, default: `{}`)
 
 ## Example
 
 ```yaml
 in:
   type: lkqd
-  option1: example1
-  option2: example2
+  secret_key_id: 
+  secret_key: 
+  report_parameters:
+    timeDimension: "HOURLY"
+    reportType: [""]
+    reportFormat: "CSV"
+    startDate: "2017-08-01"
+    endDate: "2017-08-02"
+    startHour: 0
+    endHour: 23
+    timezone: "UTC"
+    metrics: [""]
 ```
 
 
