@@ -53,9 +53,30 @@ module Embulk
         column_name.gsub!(/^\W/, '')
         column_option = DEFAULT_COLUMNS[column_name]
         if column_option
-          return {type: column_option['out_type'].to_sym, name: column_name, format: column_option['format']}
+          return {type: column_option['type'].to_sym, name: column_name, format: column_option['format']}
         else
           return {type: :string, name: column_name}
+        end
+      end
+
+      def self.try_convert(row)
+        return row.map do |field|
+          name, value = field
+          column_name = name.gsub(/^\W/, '')
+          column_option = DEFAULT_COLUMNS[column_name]
+          if column_option.nil?
+            next value
+          elsif column_option['type'] == 'timestamp'
+            next Time.strptime(value, column_option['format']).to_i
+          elsif column_option['type'] == 'long'
+            next value.gsub(',','').to_i
+          elsif column_option['type'] == 'double' && value.match(/%$/)
+            next value.gsub(',','').to_f / 100.0
+          elsif column_option['type'] == 'double'
+            next value.gsub(',','').to_f
+          else
+            next value
+          end
         end
       end
 
@@ -65,7 +86,7 @@ module Embulk
 
       def run
         CSV.foreach(@task['tempfile_path'], {headers: true}).each do |row|
-          page_builder.add(row)
+          page_builder.add(Lkqd.try_convert(row))
         end
         page_builder.finish
 
@@ -75,89 +96,89 @@ module Embulk
 
       DEFAULT_COLUMNS = {
         # dimensions' columns
-        'Time'=> { 'out_type' => 'timestamp', 'format' => "%Y-%m-%dT%H", 'timezone' => 'UTC' },
-        'Account'=> { 'out_type' => 'string' },
-        'Supply Source ID'=> { 'out_type' => 'string' },
-        'Supply Source'=> { 'out_type' => 'string' },
-        'Supply Partner'=> { 'out_type' => 'string' },
-        'Environment'=> { 'out_type' => 'string' },
-        'Domain'=> { 'out_type' => 'string' },
-        'App Name'=> { 'out_type' => 'string' },
-        'Bundle ID'=> { 'out_type' => 'string' },
-        'Supply Tag Type'=> { 'out_type' => 'string' },
-        'Demand Partner'=> { 'out_type' => 'string' },
-        'Demand Deal ID' => { 'out_type' => 'string' },
-        'Demand Deal'=> { 'out_type' => 'string' },
-        'Demand Tag'=> { 'out_type' => 'string' },
-        'Format'=> { 'out_type' => 'string' },
-        'Country'=> { 'out_type' => 'string' },
-        'Device Type'=> { 'out_type' => 'string' },
-        'OS'=> { 'out_type' => 'string' },
-        'Width X Height'=> { 'out_type' => 'string' },
+        'Time'=> { 'type' => 'timestamp', 'format' => "%Y-%m-%dT%H" },
+        'Account'=> { 'type' => 'string' },
+        'Supply Source ID'=> { 'type' => 'string' },
+        'Supply Source'=> { 'type' => 'string' },
+        'Supply Partner'=> { 'type' => 'string' },
+        'Environment'=> { 'type' => 'string' },
+        'Domain'=> { 'type' => 'string' },
+        'App Name'=> { 'type' => 'string' },
+        'Bundle ID'=> { 'type' => 'string' },
+        'Supply Tag Type'=> { 'type' => 'string' },
+        'Demand Partner'=> { 'type' => 'string' },
+        'Demand Deal ID' => { 'type' => 'string' },
+        'Demand Deal'=> { 'type' => 'string' },
+        'Demand Tag'=> { 'type' => 'string' },
+        'Format'=> { 'type' => 'string' },
+        'Country'=> { 'type' => 'string' },
+        'Device Type'=> { 'type' => 'string' },
+        'OS'=> { 'type' => 'string' },
+        'Width X Height'=> { 'type' => 'string' },
         # "Opportunity report" columns
-        'Tag Loads' => { 'out_type' => 'long' },
-        'Opportunities' => { 'out_type' => 'long' },
-        'Format Loads' => { 'out_type' => 'long' },
-        'Format Fill Rate' => { 'out_type' => 'double' },
-        'Ineligible Ops: Demand' => { 'out_type' => 'long' },
-        'Ineligible Ops: Restrictions' => { 'out_type' => 'long' },
-        'Impressions' => { 'out_type' => 'long' },
-        'Fill Rate' => { 'out_type' => 'double' },
-        'Efficiency Rate' => { 'out_type' => 'double' },
-        'CPM' => { 'out_type' => 'double' },
-        'Revenue' => { 'out_type' => 'double' },
-        'Cost' => { 'out_type' => 'double' },
-        'Profit' => { 'out_type' => 'double' },
-        'Profit Margin' => { 'out_type' => 'double' },
-        'Clicks' => { 'out_type' => 'long' },
-        'CTR' => { 'out_type' => 'double' },
-        '25% Views' => { 'out_type' => 'long' },
-        '50% Views' => { 'out_type' => 'long' },
-        '75% Views' => { 'out_type' => 'long' },
-        '100% Views' => { 'out_type' => 'long' },
-        '25% View Rate' => { 'out_type' => 'double' },
-        '50% View Rate' => { 'out_type' => 'double' },
-        '75% View Rate' => { 'out_type' => 'double' },
-        '100% View Rate' => { 'out_type' => 'double' },
-        'Viewability Measured Rate' => { 'out_type' => 'double' },
-        'Viewability Rate' => { 'out_type' => 'double' },
+        'Tag Loads' => { 'type' => 'long' },
+        'Opportunities' => { 'type' => 'long' },
+        'Format Loads' => { 'type' => 'long' },
+        'Format Fill Rate' => { 'type' => 'double' },
+        'Ineligible Ops: Demand' => { 'type' => 'long' },
+        'Ineligible Ops: Restrictions' => { 'type' => 'long' },
+        'Impressions' => { 'type' => 'long' },
+        'Fill Rate' => { 'type' => 'double' },
+        'Efficiency Rate' => { 'type' => 'double' },
+        'CPM' => { 'type' => 'double' },
+        'Revenue' => { 'type' => 'double' },
+        'Cost' => { 'type' => 'double' },
+        'Profit' => { 'type' => 'double' },
+        'Profit Margin' => { 'type' => 'double' },
+        'Clicks' => { 'type' => 'long' },
+        'CTR' => { 'type' => 'double' },
+        '25% Views' => { 'type' => 'long' },
+        '50% Views' => { 'type' => 'long' },
+        '75% Views' => { 'type' => 'long' },
+        '100% Views' => { 'type' => 'long' },
+        '25% View Rate' => { 'type' => 'double' },
+        '50% View Rate' => { 'type' => 'double' },
+        '75% View Rate' => { 'type' => 'double' },
+        '100% View Rate' => { 'type' => 'double' },
+        'Viewability Measured Rate' => { 'type' => 'double' },
+        'Viewability Rate' => { 'type' => 'double' },
         # "Request report" columns
-        'Tag Requests' => { 'out_type' => 'long' },
-        'Ads' => { 'out_type' => 'long' },
-        'VAST Ads' => { 'out_type' => 'long' },
-        'VPAID Ads' => { 'out_type' => 'long' },
-        'Wins' => { 'out_type' => 'long' },
-        'Ad Rate' => { 'out_type' => 'double' },
-        'VAST Ad Rate' => { 'out_type' => 'double' },
-        'VPAID Ad Rate' => { 'out_type' => 'double' },
-        'Win Rate' => { 'out_type' => 'double' },
-        'VPAID Responses' => { 'out_type' => 'long' },
-        'VPAID Attempts' => { 'out_type' => 'long' },
-        'VPAID Successes' => { 'out_type' => 'long' },
-        'VPAID Opt Outs' => { 'out_type' => 'long' },
-        'VPAID Timeouts' => { 'out_type' => 'long' },
-        'VPAID Errors' => { 'out_type' => 'long' },
-        'VPAID Success Rate' => { 'out_type' => 'double' },
-        'VPAID Opt Out Rate' => { 'out_type' => 'double' },
-        'VPAID Timeout Rate' => { 'out_type' => 'double' },
-        'VPAID Error Rate' => { 'out_type' => 'double' },
-        'Tag Timeouts' => { 'out_type' => 'long' },
-        'Tag Timeout Rate' => { 'out_type' => 'double' },
-        'Tag Errors' => { 'out_type' => 'long' },
-        'Tag Error Rate' => { 'out_type' => 'long' },
-        'Playback Errors' => { 'out_type' => 'long' },
-        'Playback Error Rate' => { 'out_type' => 'double' },
+        'Tag Requests' => { 'type' => 'long' },
+        'Ads' => { 'type' => 'long' },
+        'VAST Ads' => { 'type' => 'long' },
+        'VPAID Ads' => { 'type' => 'long' },
+        'Wins' => { 'type' => 'long' },
+        'Ad Rate' => { 'type' => 'double' },
+        'VAST Ad Rate' => { 'type' => 'double' },
+        'VPAID Ad Rate' => { 'type' => 'double' },
+        'Win Rate' => { 'type' => 'double' },
+        'VPAID Responses' => { 'type' => 'long' },
+        'VPAID Attempts' => { 'type' => 'long' },
+        'VPAID Successes' => { 'type' => 'long' },
+        'VPAID Opt Outs' => { 'type' => 'long' },
+        'VPAID Timeouts' => { 'type' => 'long' },
+        'VPAID Errors' => { 'type' => 'long' },
+        'VPAID Success Rate' => { 'type' => 'double' },
+        'VPAID Opt Out Rate' => { 'type' => 'double' },
+        'VPAID Timeout Rate' => { 'type' => 'double' },
+        'VPAID Error Rate' => { 'type' => 'double' },
+        'Tag Timeouts' => { 'type' => 'long' },
+        'Tag Timeout Rate' => { 'type' => 'double' },
+        'Tag Errors' => { 'type' => 'long' },
+        'Tag Error Rate' => { 'type' => 'long' },
+        'Playback Errors' => { 'type' => 'long' },
+        'Playback Error Rate' => { 'type' => 'double' },
         # custom data columns
-        'Custom 1'=> { 'out_type' => 'string' },
-        'Custom 2'=> { 'out_type' => 'string' },
-        'Custom 3'=> { 'out_type' => 'string' },
-        'Custom 4'=> { 'out_type' => 'string' },
-        'Custom 5'=> { 'out_type' => 'string' },
-        'Custom 6'=> { 'out_type' => 'string' },
-        'Custom 7'=> { 'out_type' => 'string' },
-        'Custom 8'=> { 'out_type' => 'string' },
-        'Custom 9'=> { 'out_type' => 'string' },
-        'Custom 10'=> { 'out_type' => 'string' },
+        'Custom 1'=> { 'type' => 'string' },
+        'Custom 2'=> { 'type' => 'string' },
+        'Custom 3'=> { 'type' => 'string' },
+        'Custom 4'=> { 'type' => 'string' },
+        'Custom 5'=> { 'type' => 'string' },
+        'Custom 6'=> { 'type' => 'string' },
+        'Custom 7'=> { 'type' => 'string' },
+        'Custom 8'=> { 'type' => 'string' },
+        'Custom 9'=> { 'type' => 'string' },
+        'Custom 10'=> { 'type' => 'string' },
       }.freeze
     end
 
