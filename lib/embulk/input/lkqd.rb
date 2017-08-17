@@ -20,10 +20,12 @@ module Embulk
         task['authorization'] = Base64.urlsafe_encode64("#{task['secret_key_id']}:#{task['secret_key']}")
 
         response = request_lkqd({authorization: task['authorization'], endpoint: task['endpoint'], report_parameters: task['report_parameters']})
-        tempfile = Tempfile.new('lkqd_')
-        tempfile.write response.body
-        task['tempfile_path'] = tempfile.path
+        tempfile = Tempfile.new('emublk-input-lkqd_')
+        while chunk = response.body.readpartial
+          tempfile.write chunk
+        end
         tempfile.close
+        task['tempfile_path'] = tempfile.path
 
         columns = []
         ::CSV.foreach(tempfile.path).first.each_with_index do |column_name, index|
