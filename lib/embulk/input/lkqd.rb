@@ -1,6 +1,7 @@
 require 'base64'
 require 'json'
 require 'csv'
+require 'fileutils'
 require 'tempfile'
 require 'http'
 
