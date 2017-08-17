@@ -136,6 +136,7 @@ module Embulk
         'Profit Margin' => { 'type' => 'double' },
         'Clicks' => { 'type' => 'long' },
         'CTR' => { 'type' => 'double' },
+        'Ad Starts' => { 'type' => 'long' },
         '25% Views' => { 'type' => 'long' },
         '50% Views' => { 'type' => 'long' },
         '75% Views' => { 'type' => 'long' },
