@@ -91,6 +91,7 @@ module Embulk
           page_builder.add(Lkqd.try_convert(row))
         end
         page_builder.finish
+        FileUtils.rm_rf(@task['tempfile_path'])
 
         task_report = {}
         return task_report
