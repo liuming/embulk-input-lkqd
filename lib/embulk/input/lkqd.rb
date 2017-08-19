@@ -16,6 +16,7 @@ module Embulk
           "secret_key_id" => config.param("secret_key_id", :string),
           "secret_key" => config.param("secret_key", :string),
           "endpoint" => config.param("endpoint", :string, default: 'https://api.lkqd.com/reports'),
+          "try_convert" => config.param("try_convert", :string, default: "true"),
           "report_parameters" => config.param("report_parameters", :hash, default: {}),
         }
         task['authorization'] = Base64.urlsafe_encode64("#{task['secret_key_id']}:#{task['secret_key']}")
@@ -62,7 +63,7 @@ module Embulk
         end
       end
 
-      def self.try_convert(row)
+      def self.try_convert(row, options={})
         return row.map do |field|
           name, value = field
           column_name = name.gsub(/^\W/, '')
@@ -70,7 +71,7 @@ module Embulk
           if column_option.nil?
             next value
           elsif column_option['type'] == 'timestamp'
-            next Time.strptime(value, column_option['format']).to_i
+            next Time.strptime(value + " " + options[:timezone], column_option['format'] + " %Z").to_i
           elsif column_option['type'] == 'long'
             next value.gsub(',','').to_i
           elsif column_option['type'] == 'double' && value.match(/%$/)
@@ -88,8 +89,10 @@ module Embulk
       end
 
       def run
+        convert_options = {timezone: @task['report_parameters']['timezone']}
         CSV.foreach(@task['tempfile_path'], {headers: true}).each do |row|
-          page_builder.add(Lkqd.try_convert(row))
+          row = @task['try_convert'] == "true" ? Lkqd.try_convert(row, convert_options) : row
+          page_builder.add(row)
         end
         page_builder.finish
         FileUtils.rm_rf(@task['tempfile_path'])
