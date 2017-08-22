@@ -16,8 +16,10 @@ module Embulk
           "secret_key_id" => config.param("secret_key_id", :string),
           "secret_key" => config.param("secret_key", :string),
           "endpoint" => config.param("endpoint", :string, default: 'https://api.lkqd.com/reports'),
-          "try_convert" => config.param("try_convert", :string, default: "true"),
           "copy_temp_to" => config.param("copy_temp_to", :string, default: nil),
+          "try_convert" => config.param("try_convert", :bool, default: true),
+          "measurable_impressions" => config.param("measurable_impressions", :bool, default: false),
+          "viewable_impressions" => config.param("viewable_impressions", :bool, default: false),
           "report_parameters" => config.param("report_parameters", :hash, default: {}),
         }
         task['authorization'] = Base64.urlsafe_encode64("#{task['secret_key_id']}:#{task['secret_key']}")
@@ -35,7 +37,23 @@ module Embulk
         columns = []
         ::CSV.foreach(tempfile.path).first.each_with_index do |column_name, index|
           column_type = guess_column_type(task['report_parameters']['metrics'], column_name)
-          columns << Column.new({index: index}.merge(column_type))
+          column = Column.new({index: index}.merge(column_type))
+          if column.name == 'Viewability Measured Rate'
+            task['viewability_measured_rate_index'] = index
+          elsif column.name == 'Viewability Rate'
+            task['viewability_rate_index'] = index
+          elsif column.name == 'Impressions'
+            task['impressions_index'] = index
+          end
+          columns << column
+        end
+
+        if measurable_impressions?(task)
+          columns << Column.new({index: columns.size, type: :double, name: 'Measurable Impressions'})
+        end
+
+        if viewable_impressions?(task)
+          columns << Column.new({index: columns.size, type: :double, name: 'Viewable Impressions'})
         end
 
         resume(task, columns, 1, &control)
@@ -87,14 +105,36 @@ module Embulk
         end
       end
 
+      def self.measurable_impressions?(task)
+        task['try_convert'] && task['measurable_impressions'] &&
+        task['viewability_measured_rate_index'] && task['impressions_index']
+      end
+
+      def self.viewable_impressions?(task)
+        task['try_convert'] && task['viewable_impressions'] &&
+        task['viewability_rate_index'] && task['viewability_measured_rate_index'] && task['impressions_index']
+      end
+
       def init
         @task = task
       end
 
       def run
         convert_options = {timezone: @task['report_parameters']['timezone']}
+        try_convert = @task['try_convert']
+        viewability_measured_rate_index = @task['viewability_measured_rate_index']
+        viewability_rate_index = @task['viewability_rate_index']
+        impressions_index = @task['impressions_index']
+
         CSV.foreach(@task['tempfile_path'], {headers: true}).each do |row|
-          row = @task['try_convert'] == "true" ? Lkqd.try_convert(row, convert_options) : row
+          row = try_convert ? Lkqd.try_convert(row, convert_options) : row
+          if Lkqd.measurable_impressions?(@task)
+            row << row[impressions_index] * row[viewability_measured_rate_index]
+          end
+
+          if Lkqd.viewable_impressions?(@task)
+            row << row[impressions_index] * row[viewability_measured_rate_index] * row[viewability_rate_index]
+          end
           page_builder.add(row)
         end
         page_builder.finish
