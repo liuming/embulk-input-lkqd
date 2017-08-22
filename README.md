@@ -11,10 +11,12 @@ Loads reporting data from LKQD API.
 
 ## Configuration
 
-- **secret_key_id**: API Secret Key ID (string, required)
-- **secret_key**: API Secret Key (string, required)
-- **endpoint**: API endpoint (string, default: `'https://api.lkqd.com/reports'`)
-- **report_parameters**: Report parameters documented in https://wiki.lkqd.com/display/API/LKQD+API (hash, default: `{}`)
+- **secret_key_id**: API Secret Key ID (required string, required)
+- **secret_key**: API Secret Key (required string, required)
+- **endpoint**: API endpoint (optional string, default: `'https://api.lkqd.com/reports'`)
+- **report_parameters**: Report parameters documented in https://wiki.lkqd.com/display/API/LKQD+API (required hash, default: `{}`)
+- **measurable_impressions**: calculate and inject `Measurable Impressions` column, required `"IMPRESSIONS"`, `"VIEWABILITY_MEASURED_RATE"` specified in "metrics" (optional boolean, default: false)
+- **viewable_impressions**: calculate and inject `Viewable Impressions` column, required `"IMPRESSIONS"`, `"VIEWABILITY_MEASURED_RATE"`, `"VIEWABILITY_RATE"` specified in "metrics" (optional boolean, default: false)
 
 ## Example
 
