@@ -143,6 +143,7 @@ module Embulk
         'Clicks' => { 'type' => 'long' },
         'CTR' => { 'type' => 'double' },
         'Ad Starts' => { 'type' => 'long' },
+        'Ad Starts Rate' => { 'type' => 'double' },
         '25% Views' => { 'type' => 'long' },
         '50% Views' => { 'type' => 'long' },
         '75% Views' => { 'type' => 'long' },
