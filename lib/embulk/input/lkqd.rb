@@ -17,7 +17,6 @@ module Embulk
           "secret_key" => config.param("secret_key", :string),
           "endpoint" => config.param("endpoint", :string, default: 'https://api.lkqd.com/reports'),
           "copy_temp_to" => config.param("copy_temp_to", :string, default: nil),
-          "try_convert" => config.param("try_convert", :bool, default: true),
           "measurable_impressions" => config.param("measurable_impressions", :bool, default: false),
           "viewable_impressions" => config.param("viewable_impressions", :bool, default: false),
           "report_parameters" => config.param("report_parameters", :hash, default: {}),
@@ -106,13 +105,12 @@ module Embulk
       end
 
       def self.measurable_impressions?(task)
-        task['try_convert'] && task['measurable_impressions'] &&
-        task['viewability_measured_rate_index'] && task['impressions_index']
+        task['measurable_impressions'] && task['viewability_measured_rate_index'] && task['impressions_index']
       end
 
       def self.viewable_impressions?(task)
-        task['try_convert'] && task['viewable_impressions'] &&
-        task['viewability_rate_index'] && task['viewability_measured_rate_index'] && task['impressions_index']
+        task['viewable_impressions'] && task['viewability_rate_index'] &&
+        task['viewability_measured_rate_index'] && task['impressions_index']
       end
 
       def init
@@ -121,13 +119,12 @@ module Embulk
 
       def run
         convert_options = {timezone: @task['report_parameters']['timezone']}
-        try_convert = @task['try_convert']
         viewability_measured_rate_index = @task['viewability_measured_rate_index']
         viewability_rate_index = @task['viewability_rate_index']
         impressions_index = @task['impressions_index']
 
         CSV.foreach(@task['tempfile_path'], {headers: true}).each do |row|
-          row = try_convert ? Lkqd.try_convert(row, convert_options) : row
+          row = Lkqd.try_convert(row, convert_options)
           if Lkqd.measurable_impressions?(@task)
             row << row[impressions_index] * row[viewability_measured_rate_index]
           end
