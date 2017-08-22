@@ -17,6 +17,7 @@ module Embulk
           "secret_key" => config.param("secret_key", :string),
           "endpoint" => config.param("endpoint", :string, default: 'https://api.lkqd.com/reports'),
           "try_convert" => config.param("try_convert", :string, default: "true"),
+          "copy_temp_to" => config.param("copy_temp_to", :string, default: nil),
           "report_parameters" => config.param("report_parameters", :hash, default: {}),
         }
         task['authorization'] = Base64.urlsafe_encode64("#{task['secret_key_id']}:#{task['secret_key']}")
@@ -28,6 +29,8 @@ module Embulk
         end
         tempfile.close
         task['tempfile_path'] = tempfile.path
+
+        FileUtils.cp(task['tempfile_path'], task['copy_temp_to']) if task['copy_temp_to']
 
         columns = []
         ::CSV.foreach(tempfile.path).first.each_with_index do |column_name, index|
