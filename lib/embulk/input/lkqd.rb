@@ -24,7 +24,7 @@ module Embulk
         task['authorization'] = Base64.urlsafe_encode64("#{task['secret_key_id']}:#{task['secret_key']}")
 
         response = request_lkqd({authorization: task['authorization'], endpoint: task['endpoint'], report_parameters: task['report_parameters']})
-        tempfile = Tempfile.new('emublk-input-lkqd_')
+        tempfile = Tempfile.new('embulk-input-lkqd_')
         while chunk = response.body.readpartial
           tempfile.write chunk
         end
