@@ -77,7 +77,7 @@ module Embulk
         column_name.gsub!(/^\W/, '')
         column_option = DEFAULT_COLUMNS[column_name]
         if column_option
-          return {type: column_option['type'].to_sym, name: column_name, format: column_option['format']}
+          return {type: column_option['type'].to_sym, name: column_name}
         else
           return {type: :string, name: column_name}
         end
@@ -90,8 +90,8 @@ module Embulk
           column_option = DEFAULT_COLUMNS[column_name]
           if column_option.nil?
             next value
-          elsif column_option['type'] == 'timestamp'
-            next Time.strptime(value + " " + options[:timezone], column_option['format'] + " %Z").to_i
+          #elsif column_option['type'] == 'timestamp'
+          #  next Time.strptime(value + " " + options[:timezone], column_option['format'] + " %Z").to_i
           elsif column_option['type'] == 'long'
             next value.gsub(',','').to_i
           elsif column_option['type'] == 'double' && value.match(/%$/)
@@ -143,7 +143,7 @@ module Embulk
 
       DEFAULT_COLUMNS = {
         # dimensions' columns
-        'Time'=> { 'type' => 'timestamp', 'format' => "%Y-%m-%dT%H" },
+        'Time'=> { 'type' => 'string' },
         'Account'=> { 'type' => 'string' },
         'Supply Source ID'=> { 'type' => 'string' },
         'Supply Source'=> { 'type' => 'string' },
