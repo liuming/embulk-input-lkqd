@@ -94,8 +94,10 @@ module Embulk
           #  next Time.strptime(value + " " + options[:timezone], column_option['format'] + " %Z").to_i
           elsif column_option['type'] == 'long'
             next value.gsub(',','').to_i
-          elsif column_option['type'] == 'double' && value.match(/%$/)
+          elsif column_option['type'] == 'double' && value.match(/%$/) # handle x,xxxx.yy%
             next value.gsub(',','').to_f / 100.0
+          elsif column_option['type'] == 'double' && value.match(/^\$[\d\.,]+$/) # handle $x,xxxx.yy%
+            next value.gsub(/[$,]/,'').to_f / 100.0
           elsif column_option['type'] == 'double'
             next value.gsub(',','').to_f
           else
