@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "embulk-input-lkqd"
-  spec.version       = "0.8.0"
+  spec.version       = "0.8.1"
   spec.authors       = ["Ming Liu"]
   spec.summary       = "LKQD input plugin for Embulk"
   spec.description   = "Loads reporting data from LKQD API."

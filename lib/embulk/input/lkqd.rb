@@ -97,7 +97,7 @@ module Embulk
           elsif column_option['type'] == 'double' && value.match(/%$/) # handle x,xxxx.yy%
             next value.gsub(',','').to_f / 100.0
           elsif column_option['type'] == 'double' && value.match(/^\$[\d\.,]+$/) # handle $x,xxxx.yy%
-            next value.gsub(/[$,]/,'').to_f / 100.0
+            next value.gsub(/[$,]/,'').to_f
           elsif column_option['type'] == 'double'
             next value.gsub(',','').to_f
           else
